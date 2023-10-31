@@ -1,0 +1,3 @@
+[submodule "scrap/Opensubtitles-Unofficial-API"]
+	path = scrap/Opensubtitles-Unofficial-API
+	url = https://github.com/bipuldey19/Opensubtitles-Unofficial-API.git
