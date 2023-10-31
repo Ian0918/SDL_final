@@ -2,4 +2,4 @@
 
 ## TODOs:
 - [x] scrap subtitle function
-- [] scrap all related movies' subtitle
+- [ ] scrap all related movies' subtitle
