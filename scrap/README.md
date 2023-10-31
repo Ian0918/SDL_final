@@ -9,7 +9,7 @@ There are 2 methods to set up initially:
 cd Opensubtitles-Unoffcial-API && npm install && npm start
 ```
 
-2. run the server within the python program process
+2. run the server within the python program process (TODO)
     1. set `INIT = True` if you run for the first time
     2. set `START_SERVER = True` if you run the server as a subprocess in the Python program
 
@@ -19,5 +19,5 @@ cd Opensubtitles-Unoffcial-API && npm install && npm start
 cd Opensubtitles-Unoffcial-API && npm start
 ```
 
-2. run the server within the python program process
+2. run the server within the python program process (TODO)
     1. set `START_SERVER = True` if you run the server as a subprocess in the Python program
