@@ -1,0 +1,6 @@
+{
+    "movie_name": {
+        "status": "[ready / unready]",
+        "file": "[filename]"
+    }
+}
