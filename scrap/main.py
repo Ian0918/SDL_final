@@ -2,6 +2,8 @@ import os, json
 import requests as re
 from bs4 import BeautifulSoup
 import asyncio, aiohttp
+from tqdm.asyncio import tqdm_asyncio
+import logging
 
 DATA_PATH_PREFIX = '..'
 # if need to start the server within the process, set START_SERVER=True;
@@ -15,53 +17,68 @@ async def getSub(mov_title, session, log):
         if res.status == 200:
             res_json = await res.json()
         else:
+            fail_status['status'] = res.status
             return fail_status
 
-    print(mov_title, len(res_json),res_json[0]['url'])
-    async with session.get(res_json[0]['url']) as movie_res:
-        if movie_res.status == 200:
-            res_txt = await movie_res.text()
-            soup = BeautifulSoup(res_txt, features='html.parser')
-        else:
-            return fail_status
-        if len(soup.find(id='search_results')) == 0:
-            prefix = 'https://www.opensubtitles.org'
-            postfix = res_json[0]['url'].split('/')[-2]
-        else:
-            prefix = 'https://www.opensubtitles.org'
-            postfix = soup.findAll(class_='bnone')
-            postfix = postfix[0]['href'].split('/')[-2]
-        print(f'movie: {mov_title}, postfix: {postfix}')
+    logging.info(f'{mov_title} {len(res_json)}')
+    cur_status = ""
+    for i in range(len(res_json)):
+        logger.info(f'{res_json[i]["url"]}')
+        async with session.get(res_json[i]['url']) as movie_res:
+            if movie_res.status == 200:
+                res_txt = await movie_res.text()
+                soup = BeautifulSoup(res_txt, features='html.parser')
+            else:
+                cur_status = movie_res.status
+                logging.warning(f'{mov_title} {res_json[i]["url"]} response status {movie_res.status}')
+                continue
+            if len(soup.findAll(id='search_results')) == 0:
+                prefix = 'https://www.opensubtitles.org'
+                # postfixs = [res_json[i]['url'].split('/')[-2]]
+                postfixs = [res_json[i]['url']]
+            else:
+                prefix = 'https://www.opensubtitles.org'
+                postfixs = [p['href'] for p in soup.findAll(class_='bnone')]
 
-    async with session.get(f'{prefix}/en/subtitleserve/sub/{postfix}') as dl_page:
-        if dl_page.status == 200:
-            if not os.path.isdir(f'{DATA_PATH_PREFIX}/sub'):
-                os.mkdir(f'{DATA_PATH_PREFIX}/sub')
-            with open(f'{DATA_PATH_PREFIX}/sub/{mov_title}.zip', 'wb') as f:
-                dl_file = await dl_page.content.read()
-                f.write(dl_file)
-            return {'status': 'ready', 'file': f'{DATA_PATH_PREFIX}/sub/{mov_title}.zip'}
-        else:
-            return fail_status
+        for i in range(len(postfixs)):
+            postfix = postfixs[i].split('/')[-2]
+            logging.info(f'movie: {mov_title}, postfix: {postfix}')
+
+            async with session.get(f'{prefix}/en/subtitleserve/sub/{postfix}') as dl_page:
+                #await dl_page.status
+                if dl_page.status == 200:
+                    if not os.path.isdir(f'{DATA_PATH_PREFIX}/sub'):
+                        os.mkdir(f'{DATA_PATH_PREFIX}/sub')
+                    with open(f'{DATA_PATH_PREFIX}/sub/{mov_title}.zip', 'wb') as f:
+                        dl_file = await dl_page.content.read()
+                        f.write(dl_file)
+                    logging.info(f'wrote movie {mov_title}')           
+                    return {'status': 'ready', 'file': f'{DATA_PATH_PREFIX}/sub/{mov_title}.zip'}
+                else:
+                    cur_status = dl_page.status
+                    logging.warning(f'{mov_title} {f"{prefix}/en/subtitleserve/sub/{postfix}"} response status {dl_page.status}')
+                    continue
+    fail_status['status'] = cur_status
+    return fail_status
         
 async def semSub(semaphore, mv, session, log=None):
     async with semaphore:
-        try:
-            res = await getSub(mv, session, log)
-        except:
-            res = {'status': 'unready', 'file': ''}
+        # try:
+        #     res = await getSub(mv, session, log)
+        # except Exception as e:
+        #     res = {'status': f'{f"{e}: {e.message}" if hasattr(e, "message") else f"{e}"}', 'file': ''}
+        res = await getSub(mv, session, log)
+        logging.info(f'{mv}: {res}')
         return {mv: res}
 
-async def main(MVs):
+async def main(MVs: dict):
     sem = asyncio.Semaphore(3)
     async with aiohttp.ClientSession() as session: 
         tasks = []
         for i, mv in enumerate(MVs):
             if MVs[mv]['status'] != 'ready':
                 tasks.append(semSub(sem, mv, session=session))
-            # if i % 10 == 0:
-            #     await asyncio.sleep(1)
-        return await asyncio.gather(*tasks)
+        return await tqdm_asyncio.gather(*tasks)
 
 if __name__ == '__main__':
 
@@ -77,6 +94,19 @@ if __name__ == '__main__':
     #     with open(f'{DATA_PATH_PREFIX}/sub/scrap_status.json', 'w') as f:
     #         json.dump(MVs, f)
 
+    #logging.basicConfig(level=logging.info, filemode='a', filename='progress.log')
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('[%(asctime)s %(levelname)-8s] %(message)s', datefmt='%Y%m%d %H:%M:%S')
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+    fh = logging.FileHandler('progress.log')
+    fh.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+    #logger.addHandler(ch)
+    logger.addHandler(fh)
+
     if not os.path.isfile(f'{DATA_PATH_PREFIX}/sub/scrap_status.json'):
         import pandas as pd
         mv_df = pd.read_csv(f'{DATA_PATH_PREFIX}/raw/movies_metadata.csv')
@@ -85,11 +115,9 @@ if __name__ == '__main__':
     else:
         with open(f'{DATA_PATH_PREFIX}/sub/scrap_status.json') as f:
             MVs = json.load(f)
-    enMv_titles = MVs.keys()
-    try:
-        res = asyncio.run(main(enMv_titles))
-    finally:
-        for r in res:
-            MVs[r] = res[r]
-        with open(f'{DATA_PATH_PREFIX}/sub/scrap_status.json', 'w') as f:
-            json.dump(MVs, f)
+    res = asyncio.run(main(MVs))
+    for r in res:
+        MVs.update(r)
+    with open(f'{DATA_PATH_PREFIX}/sub/scrap_status.json', 'w') as f:
+        json.dump(MVs, f)
+
