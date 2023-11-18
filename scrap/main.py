@@ -12,17 +12,24 @@ DATA_PATH_PREFIX = '..'
 # INIT = False
 
 async def getSub(mov_title, session, log):
+    def delay_time(res):
+        if (res.status == 429):
+            logging.info(f'Retry-After: {res.headers["Retry-After"]}\n')
+
     fail_status = {'status': 'unready', 'file': ''}
     async with session.get(f'http://localhost:3000/api/eng/search?q={"+".join(mov_title.lower().split(" "))}&type=movies') as res:
         if res.status == 200:
             res_json = await res.json()
         else:
-            fail_status['status'] = res.status
+            fail_status['status'] = f'{res.status}'
+            delay_time(res)
             return fail_status
 
     logging.info(f'{mov_title} {len(res_json)}')
     cur_status = ""
     for i in range(len(res_json)):
+        if not res_json[i]:
+            continue
         logger.info(f'{res_json[i]["url"]}')
         async with session.get(res_json[i]['url']) as movie_res:
             if movie_res.status == 200:
@@ -31,6 +38,7 @@ async def getSub(mov_title, session, log):
             else:
                 cur_status = movie_res.status
                 logging.warning(f'{mov_title} {res_json[i]["url"]} response status {movie_res.status}')
+                delay_time(movie_res)
                 continue
             if len(soup.findAll(id='search_results')) == 0:
                 prefix = 'https://www.opensubtitles.org'
@@ -57,8 +65,9 @@ async def getSub(mov_title, session, log):
                 else:
                     cur_status = dl_page.status
                     logging.warning(f'{mov_title} {f"{prefix}/en/subtitleserve/sub/{postfix}"} response status {dl_page.status}')
+                    delay_time(dl_page)
                     continue
-    fail_status['status'] = cur_status
+    fail_status['status'] = f'{cur_status}'
     return fail_status
         
 async def semSub(semaphore, mv, session, log=None):
