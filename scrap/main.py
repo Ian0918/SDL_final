@@ -14,7 +14,7 @@ DATA_PATH_PREFIX = '..'
 async def getSub(mov_title, session, log):
     def delay_time(res):
         if (res.status == 429):
-            logging.info(f'Retry-After: {res.headers["Retry-After"]}\n')
+            logging.info(f'Retry-After: {res.headers["Retry-After"] if "Retry-After" in res.headers else "IDK"}\n')
 
     fail_status = {'status': 'unready', 'file': ''}
     async with session.get(f'http://localhost:3000/api/eng/search?q={"+".join(mov_title.lower().split(" "))}&type=movies') as res:
