@@ -4,12 +4,18 @@ from bs4 import BeautifulSoup
 import asyncio, aiohttp
 from tqdm.asyncio import tqdm_asyncio
 import logging
+import random
 
 DATA_PATH_PREFIX = '..'
 # if need to start the server within the process, set START_SERVER=True;
 # if you init for the first time, set INIT = True
 # START_SERVER = True
 # INIT = False
+
+proxies = [
+    'https://195.181.134.36:3128',
+    'https://81.134.57.82:3128'
+]
 
 async def getSub(mov_title, session, log):
     def delay_time(res):
@@ -52,7 +58,7 @@ async def getSub(mov_title, session, log):
             postfix = postfixs[i].split('/')[-2]
             logging.info(f'movie: {mov_title}, postfix: {postfix}')
 
-            async with session.get(f'{prefix}/en/subtitleserve/sub/{postfix}') as dl_page:
+            async with session.get(f'{prefix}/en/subtitleserve/sub/{postfix}', proxy=random.choice(proxies), verify=False) as dl_page:
                 #await dl_page.status
                 if dl_page.status == 200:
                     if not os.path.isdir(f'{DATA_PATH_PREFIX}/sub'):
@@ -82,7 +88,11 @@ async def semSub(semaphore, mv, session, log=None):
 
 async def main(MVs: dict):
     sem = asyncio.Semaphore(3)
-    async with aiohttp.ClientSession() as session: 
+    agents = [
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+    ]
+    async with aiohttp.ClientSession(headers={'User-Agent': agents[0]}) as session: 
         tasks = []
         for i, mv in enumerate(MVs):
             if MVs[mv]['status'] != 'ready':
