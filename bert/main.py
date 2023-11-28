@@ -50,3 +50,6 @@ if __name__ == "__main__":
     data = prepare_dataset()
     long_subs = get_longsubs(data)
     movie_cls_token = inference_bert(long_subs, model, tokenizer)
+    print(movie_cls_token)
+
+    # add your code to manipulate `movie_cls_token` here
