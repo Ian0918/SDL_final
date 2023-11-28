@@ -1,3 +1,9 @@
 requests
 aiohttp
 bs4
+numpy
+pandas
+tqdm
+torch
+transformers
+kaggle

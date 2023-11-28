@@ -13,6 +13,7 @@ DATA_PATH_PREFIX = '..'
 # INIT = False
 
 proxies = [
+    'https://51.83.193.208:80',
     'https://195.181.134.36:3128',
     'https://81.134.57.82:3128'
 ]
@@ -58,7 +59,7 @@ async def getSub(mov_title, session, log):
             postfix = postfixs[i].split('/')[-2]
             logging.info(f'movie: {mov_title}, postfix: {postfix}')
 
-            async with session.get(f'{prefix}/en/subtitleserve/sub/{postfix}', proxy=random.choice(proxies), verify=False) as dl_page:
+            async with session.get(f'{prefix}/en/subtitleserve/sub/{postfix}') as dl_page:
                 #await dl_page.status
                 if dl_page.status == 200:
                     if not os.path.isdir(f'{DATA_PATH_PREFIX}/sub'):
