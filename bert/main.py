@@ -7,9 +7,11 @@ import pandas as pd
 import torch
 from transformers import BertModel, BertTokenizer
 
-def prepare_model():
-    model = BertModel.from_pretrained('bert-base-uncased')
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+from model import LongBERT
+
+def prepare_model(modelname = 'bert-base-uncased'):
+    model = BertModel.from_pretrained(modelname)
+    tokenizer = BertTokenizer.from_pretrained(modelname)
     
     return model, tokenizer
 
@@ -80,9 +82,11 @@ if __name__ == "__main__":
     model, tokenizer = prepare_model()
     data = prepare_dataset()
     long_subs = get_longsubs(data)
-    movie_cls_token = inference_bert(long_subs, model, tokenizer)
+    LB = LongBERT({"model": model, "tokenizer": tokenizer, "method": "head_tail"})
+    
+    movie_cls_token = LB.inference(long_subs)
 
     print(movie_cls_token)
-    print(k_means(movie_cls_token, n_clusters=8))
 
     # add your code to manipulate `movie_cls_token` here
+    # print(k_means(movie_cls_token, n_clusters=8))
