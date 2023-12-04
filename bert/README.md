@@ -5,9 +5,9 @@
 python main.py [--modelname/-m "your model name"] [--method "head"/"head_tail"/"chunk"] [--data/-d "your data path"]
 ```
 ### Default:
-`--modelname`: `bert-base-uncased`
-`--method`: `head`
-`--data`: `data/exp_data.parquet`
+- `--modelname`: `bert-base-uncased`
+- `--method`: `head`
+- `--data`: `data/exp_data.parquet`
 
 
 ## Code Structure
