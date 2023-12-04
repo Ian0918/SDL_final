@@ -1,6 +1,6 @@
 import os, json
 import gc
-import tqdm
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -8,8 +8,8 @@ import torch
 from transformers import BertModel, BertTokenizer
 
 def prepare_model():
-    model = BertModel('bert-base-uncased')
-    tokenizer = BertTokenizer('bert-base-uncased')
+    model = BertModel.from_pretrained('bert-base-uncased')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     
     return model, tokenizer
 
@@ -28,7 +28,7 @@ def get_longsubs(data=None):
         for sub in subs:
             long_sub += sub['Text']
         return long_sub
-    assert data
+    assert not data is None
     long_subs = data['Context'].apply(sub_concat)
     long_subs.reset_index(drop=True, inplace=True)
     return long_subs
@@ -58,11 +58,31 @@ def inference_bert(data, model, tokenizer, device='cuda' if torch.cuda.is_availa
         gc.collect()
     return cls_sub
 
+def k_means(x, **kwargs):
+    '''
+    x: array-like object, that contains data for clustering
+    **kwargs: any parameter for sklearn.cluster.KMeans object
+    '''
+    from sklearn.cluster import KMeans
+
+    knn = KMeans(**kwargs)
+    if isinstance(x, np.ndarray):
+        knn.fit(x)
+    else:
+        try:
+            knn.fit(np.array(x))
+        except:
+            raise TypeError("\'x\' is not an array-like object")
+    return knn.labels_
+    
+
 if __name__ == "__main__":
     model, tokenizer = prepare_model()
     data = prepare_dataset()
     long_subs = get_longsubs(data)
     movie_cls_token = inference_bert(long_subs, model, tokenizer)
+
     print(movie_cls_token)
+    print(k_means(movie_cls_token, n_clusters=8))
 
     # add your code to manipulate `movie_cls_token` here
