@@ -4,10 +4,8 @@ import numpy as np
 import transformers
 from transformers import AutoTokenizer, AutoModel
 from tqdm import tqdm
-import os, json
 import gc
 
-import main
 
 class LongBERT(nn.Module):
 
@@ -42,17 +40,17 @@ class LongBERT(nn.Module):
         elif self.method[0] == "head_tail":
             all_tok = self.tokenizer(sentence, return_tensors='pt')
             head_tok = {
-                'input_ids': torch.tensor(all_tok['input_ids'][:, :129]),
-                'token_type_ids': torch.tensor(all_tok['token_type_ids'][:, :129]),
-                'attention_mask': torch.tensor(all_tok['attention_mask'][:, :129])
+                'input_ids': all_tok['input_ids'][:, :129].clone().detach(),
+                'token_type_ids': all_tok['token_type_ids'][:, :129].clone().detach(),
+                'attention_mask': all_tok['attention_mask'][:, :129].clone().detach()
             }
             tail_tok = {
-                'input_ids': torch.tensor(all_tok['input_ids'][:, len(all_tok['input_ids']) - (512 - 129):]),
-                'token_type_ids': torch.tensor(all_tok['token_type_ids'][:, len(all_tok['token_type_ids']) - (512 - 129):]),
-                'attention_mask': torch.tensor(all_tok['attention_mask'][:, len(all_tok['attention_mask']) - (512 - 129):])
+                'input_ids': all_tok['input_ids'][:, len(all_tok['input_ids']) - (512 - 129):].clone().detach(),
+                'token_type_ids': all_tok['token_type_ids'][:, len(all_tok['token_type_ids']) - (512 - 129):].clone().detach(),
+                'attention_mask': all_tok['attention_mask'][:, len(all_tok['attention_mask']) - (512 - 129):].clone().detach()
             }
             tok = {
-                'input_ids': torch.cat((head_tok['input_ids'],tail_tok['input_ids']), dim=1).to(self.device),
+                'input_ids': torch.cat((head_tok['input_ids'], tail_tok['input_ids']), dim=1).to(self.device),
                 'token_type_ids': torch.cat((head_tok['token_type_ids'], tail_tok['token_type_ids']), dim=1).to(self.device),
                 'attention_mask': torch.cat((head_tok['attention_mask'], tail_tok['attention_mask']), dim=1).to(self.device)
             }
@@ -76,15 +74,15 @@ class LongBERT(nn.Module):
         return np.array(cls_sub)
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    import pandas as pd
+#     import pandas as pd
 
-    model, tokenizer = main.prepare_model()
-    data = main.prepare_dataset()
-    long_subs = main.get_longsubs(data)
+#     model, tokenizer = main.prepare_model(modelname=args.modelname)
+#     data = main.prepare_dataset()
+#     long_subs = main.get_longsubs(data)
 
-    LB = LongBERT({"model": model, "tokenizer": tokenizer, "method": "head_tail"})
+#     LB = LongBERT({"model": model, "tokenizer": tokenizer, "method": "head_tail"})
     
-    movie_cls_token = LB.inference(long_subs)
-    print(movie_cls_token)
+#     movie_cls_token = LB.inference(long_subs)
+#     print(movie_cls_token)

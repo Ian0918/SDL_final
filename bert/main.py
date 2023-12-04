@@ -1,5 +1,6 @@
 import os, json
 import gc
+import argparse
 from tqdm import tqdm
 
 import numpy as np
@@ -15,8 +16,9 @@ def prepare_model(modelname = 'bert-base-uncased'):
     
     return model, tokenizer
 
-def prepare_dataset():
-    return pd.read_parquet('data/exp_data.parquet')
+def prepare_dataset(data_path):
+    assert os.path.isfile(data_path)
+    return pd.read_parquet(data_path)
 
 def get_longsubs(data=None):
     '''
@@ -79,8 +81,17 @@ def k_means(x, **kwargs):
     
 
 if __name__ == "__main__":
-    model, tokenizer = prepare_model()
-    data = prepare_dataset()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--modelname", "-m", type=str, default="bert-base-cased")
+    parser.add_argument("--method", type=str, default="head")
+    parser.add_argument("--data", "-d", type=str, default="data/exp_data.parquet")
+
+    args = parser.parse_args()
+
+    assert args.method in ['head', 'head_tail', 'chunk']
+
+    model, tokenizer = prepare_model(modelname=args.modelname)
+    data = prepare_dataset(data_path=args.data)
     long_subs = get_longsubs(data)
     LB = LongBERT({"model": model, "tokenizer": tokenizer, "method": "head_tail"})
     
