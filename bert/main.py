@@ -17,6 +17,11 @@ def prepare_dataset():
     return pd.read_parquet('data/exp_data.parquet')
 
 def get_longsubs(data=None):
+    '''
+    data: pd.DataFrame, which is gotten from prepare_dataset()
+
+    return: pd.Series, each row is a full text of `Context` column in `data`
+    '''
     def sub_concat(subs):
         subs = json.loads(subs)
         long_sub = ""
@@ -29,6 +34,14 @@ def get_longsubs(data=None):
     return long_subs
 
 def inference_bert(data, model, tokenizer, device='cuda' if torch.cuda.is_available() else 'cpu'):
+    '''
+    data: array-like, each row is a sentence to infer by BERT
+    model: transformers.Model, the model instance used for inference
+    tokenizer: transformers.Tokenizer, the tokenizer used for inference
+    device: str, 'cuda' or 'cpu', default 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    return: list, BERT CLS token of every row in `data`
+    '''
     model = model.to(device)
     
     cls_sub = []
