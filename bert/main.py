@@ -94,7 +94,7 @@ if __name__ == "__main__":
     model, tokenizer = prepare_model(modelname=args.modelname)
     data = prepare_dataset(data_path=args.data)
     long_subs = get_longsubs(data)
-    LB = LongBERT({"model": model, "tokenizer": tokenizer, "method": "head_tail"})
+    LB = LongBERT({"model": model, "tokenizer": tokenizer, "method": args.method})
     
     movie_cls_token = LB.inference(long_subs)
 
