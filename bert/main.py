@@ -6,13 +6,13 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import torch
-from transformers import BertModel, BertTokenizer
+from transformers import AutoTokenizer, AutoModel
 
 from model import LongBERT
 
 def prepare_model(modelname = 'bert-base-uncased'):
-    model = BertModel.from_pretrained(modelname)
-    tokenizer = BertTokenizer.from_pretrained(modelname)
+    model = AutoModel.from_pretrained(modelname)
+    tokenizer = AutoTokenizer.from_pretrained(modelname)
     
     return model, tokenizer
 
@@ -85,6 +85,7 @@ if __name__ == "__main__":
     parser.add_argument("--modelname", "-m", type=str, default="bert-base-cased")
     parser.add_argument("--method", type=str, default="head")
     parser.add_argument("--data", "-d", type=str, default="data/exp_data.parquet")
+    parser.add_argument("--save", "-s", type=bool, default=False)
 
     args = parser.parse_args()
 
@@ -98,6 +99,9 @@ if __name__ == "__main__":
     movie_cls_token = LB.inference(long_subs)
 
     print(movie_cls_token)
+
+    if args.save:
+        pd.DataFrame(movie_cls_token).to_parquet(f"{args.modelname}_{args.method}.parquet")
 
     # add your code to manipulate `movie_cls_token` here
     # print(k_means(movie_cls_token, n_clusters=8))

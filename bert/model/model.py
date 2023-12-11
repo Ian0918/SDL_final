@@ -38,25 +38,17 @@ class LongBERT(nn.Module):
         if self.method[0] == "head":
             return self.model(**self.tokenizer(sentence, return_tensors='pt', padding=True, truncation=True).to(self.device))[0][:, 0, :].reshape(-1).to('cpu')
         elif self.method[0] == "head_tail":
+            if len(self.method) >= 2:
+                head_num = self.method[1]
+            else:
+                head_num = 129
             all_tok = self.tokenizer(sentence, return_tensors='pt')
-            head_tok = {
-                'input_ids': all_tok['input_ids'][:, :129].clone().detach(),
-                'token_type_ids': all_tok['token_type_ids'][:, :129].clone().detach(),
-                'attention_mask': all_tok['attention_mask'][:, :129].clone().detach()
-            }
-            tail_tok = {
-                'input_ids': all_tok['input_ids'][:, len(all_tok['input_ids']) - (512 - 129):].clone().detach(),
-                'token_type_ids': all_tok['token_type_ids'][:, len(all_tok['token_type_ids']) - (512 - 129):].clone().detach(),
-                'attention_mask': all_tok['attention_mask'][:, len(all_tok['attention_mask']) - (512 - 129):].clone().detach()
-            }
-            tok = {
-                'input_ids': torch.cat((head_tok['input_ids'], tail_tok['input_ids']), dim=1).to(self.device),
-                'token_type_ids': torch.cat((head_tok['token_type_ids'], tail_tok['token_type_ids']), dim=1).to(self.device),
-                'attention_mask': torch.cat((head_tok['attention_mask'], tail_tok['attention_mask']), dim=1).to(self.device)
-            }
+            head_tok = {k: all_tok[k][:, :head_num].clone().detach() for k in all_tok.keys()}
+            tail_tok = {k: all_tok[k][:, len(all_tok[k])- (512 - head_num):].clone().detach() for k in all_tok.keys()}
+            tok = {k: torch.cat((head_tok[k], tail_tok[k]), dim=1).to(self.device) for k in all_tok.keys()}
             return self.model(**tok)[0][:, 0, :].reshape(-1).to('cpu')
         elif self.method[0] == "chunk":
-            pass
+            raise NotImplementedError()
         else:
             return None
 
