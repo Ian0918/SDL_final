@@ -30,7 +30,7 @@ def get_longsubs(data=None):
         subs = json.loads(subs)
         long_sub = ""
         for sub in subs:
-            long_sub += sub['Text']
+            long_sub += ' '.join(sub['Text']) if isinstance(sub['Text'], list) else sub['Text']
         return long_sub
     assert not data is None
     long_subs = data['Context'].apply(sub_concat)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     print(movie_cls_token)
 
     if args.save:
-        pd.DataFrame(movie_cls_token).to_parquet(f"{args.modelname}_{args.method}.parquet")
+        pd.DataFrame(movie_cls_token).to_parquet(f"{args.modelname}_{args.data.split('/')[-1].split('.')[0]}_{args.method}.parquet")
 
     # add your code to manipulate `movie_cls_token` here
     # print(k_means(movie_cls_token, n_clusters=8))
