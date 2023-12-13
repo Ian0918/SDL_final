@@ -41,10 +41,10 @@ class LongBERT(nn.Module):
             if len(self.method) >= 2:
                 head_num = self.method[1]
             else:
-                head_num = 129
+                head_num = int(0.2 * self.tokenizer.model_max_length) + 1
             all_tok = self.tokenizer(sentence, return_tensors='pt')
             head_tok = {k: all_tok[k][:, :head_num].clone().detach() for k in all_tok.keys()}
-            tail_tok = {k: all_tok[k][:, len(all_tok[k])- (512 - head_num):].clone().detach() for k in all_tok.keys()}
+            tail_tok = {k: all_tok[k][:, len(all_tok[k])- (self.tokenizer.model_max_length - head_num):].clone().detach() for k in all_tok.keys()}
             tok = {k: torch.cat((head_tok[k], tail_tok[k]), dim=1).to(self.device) for k in all_tok.keys()}
             return self.model(**tok)[0][:, 0, :].reshape(-1).to('cpu')
         elif self.method[0] == "chunk":

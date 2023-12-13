@@ -101,7 +101,7 @@ if __name__ == "__main__":
     print(movie_cls_token)
 
     if args.save:
-        pd.DataFrame(movie_cls_token).to_parquet(f"{args.modelname}_{args.data.split('/')[-1].split('.')[0]}_{args.method}.parquet")
+        pd.DataFrame(movie_cls_token).to_parquet(f"{'-'.join(args.modelname.split('/'))}_{args.data.split('/')[-1].split('.')[0]}_{args.method}.parquet")
 
     # add your code to manipulate `movie_cls_token` here
     # print(k_means(movie_cls_token, n_clusters=8))
