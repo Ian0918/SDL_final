@@ -16,27 +16,22 @@ git pull --rebase
 ```{shell}
 git pull
 ```
-If yo need to use submodules (in this repo, `Opensubtitles-Unofficial-API`):
+If you need to use submodules (in this repo, `Opensubtitles-Unofficial-API`):
 ```{shell}
 git pull --rebase --recurse-submodules && git submodule update --recursive --init
 ```
 
 2. (Optional) Unzip raw data
-For those who have to perform with the raw data (you have to download the raw data into `raw` in advance),
+For those who have to perform with the raw data (you have to download the raw data into `raw` in advance, for more information, check out [here](./raw/README.md)),
 ```{shell}
 unzip raw/the-movies-dataset.zip
 ```
 
 3. Environment setup
 ```{shell}
-# SDL_final
+# ./
 python -m pip install -r requirements.txt
 ```
 (Optional but recommended)
 `git-lfs`: [official site](https://git-lfs.com/)
 
-## TODOs:
-- [x] scrap subtitle function
-- [x] read dataset & demo 3 subs
-- [x] async scrap (TODO: edge cases & 429 error)
-- [ ] scrap all related movies' subtitle

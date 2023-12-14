@@ -2,13 +2,13 @@
 
 ## Usage
 ```{shell}
-python main.py [--modelname/-m "your model name"] [--method "head"/"head_tail"/"chunk"] [--data/-d "your data path"]
+python main.py [--modelname/-m "your model name"] [--method "head"/"head_tail"/"chunk"] [--data/-d "your data path"] [--save/-s False(/True)]
 ```
 ### Default:
 - `--modelname`: `bert-base-uncased`
 - `--method`: `head`
 - `--data`: `data/exp_data.parquet`
-
+- `--save`: False
 
 ## Code Structure
 `main.py`:
@@ -26,7 +26,7 @@ def get_longsubs(data=None):
     # returns an array of long subs from dataset `data`
     ...
 
-# deprecated
+# deprecated, integrated in model.LongBERT
 def inference_bert(data, model, tokenizer, device='cuda' if torch.cuda.is_available() else 'cpu'):
     # returns an array CLS of every data in `data`, using `model` and `tokenizer`
     ...
